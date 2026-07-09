@@ -1,6 +1,8 @@
 // MYSQL CODE (1/4): Import the mysql2 driver so Node.js can talk to MySQL
 const mysql = require('mysql2');
 const express = require('express');
+const multer = require('multer');
+const path = require('path');
 const app = express();
 
 // Tell Express to use EJS for rendering views
@@ -10,6 +12,18 @@ app.set('view engine', 'ejs');
 app.use(express.urlencoded({ extended: false }));
 
 app.use(express.static('public')); // Serve static files from the 'public' directory
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'public/images');
+  },
+  filename: (req, file, cb) => {
+    cb(null, Date.now() + path.extname(file.originalname));
+  }
+});
+
+const upload = multer({ storage: storage });
+
 // MYSQL CODE (2/4): Create the connection to the MySQL database (set your own credentials here)
 const connection = mysql.createConnection({
   host: 'localhost',
@@ -68,9 +82,10 @@ app.get('/addStudent', (req, res) => {
 });
 
 // Handle the submitted form and insert the new student into the database
-app.post('/addStudent', (req, res) => {
+app.post('/addStudent', upload.single('image'), (req, res) => {
   // Pull the values submitted from the form (names must match the input "name" attributes)
-  const { name, dob, contact, image } = req.body;
+  const { name, dob, contact } = req.body;
+  const image = req.file ? req.file.filename : null;
   const sql = 'INSERT INTO student (name, dob, contact, image) VALUES (?, ?, ?, ?)';
   connection.query(sql, [name, dob, contact, image], (error, results) => {
     if (error) {
@@ -79,6 +94,67 @@ app.post('/addStudent', (req, res) => {
     }
     // After a successful insert, go back to the student list
     res.redirect('/');
+  });
+});
+
+// UPDATE (1/2): Show the edit form pre-filled with the student's current data
+app.get('/editStudent/:id', (req, res) => {
+  const studentId = req.params.id;
+  const sql = 'SELECT * FROM student WHERE studentId = ?';
+  // Fetch data from MySQL based on the student ID
+  connection.query(sql, [studentId], (error, results) => {
+    if (error) {
+      console.error('Database query error:', error.message);
+      return res.send('Error retrieving student by ID');
+    }
+    // Check if any student with the given ID was found
+    if (results.length > 0) {
+      // Render the edit form with the student's current data
+      res.render('editStudent', { student: results[0] });
+    } else {
+      // If no student with the given ID was found, let the user know
+      res.status(404).send('Student not found');
+    }
+  });
+});
+
+// UPDATE (2/2): Handle the submitted edit form and update the record in the database
+app.post('/editStudent/:id', upload.single('image'), (req, res) => {
+  const studentId = req.params.id;
+  // Extract student data from the request body (names must match the input "name" attributes)
+  const { name, dob, contact, currentImage } = req.body;
+  let image = currentImage;
+  if (req.file) {
+    image = req.file.filename;
+  }
+
+  const sql = 'UPDATE student SET name = ?, dob = ?, contact = ?, image = ? WHERE studentId = ?';
+  // Update the record in the database with the new data
+  connection.query(sql, [name, dob, contact, image, studentId], (error, results) => {
+    if (error) {
+      // Handle any error that occurs during the database operation
+      console.error('Error updating student:', error);
+      res.send('Error updating student');
+    } else {
+      // After a successful update, go back to the student list
+      res.redirect('/');
+    }
+  });
+});
+
+// DELETE: Remove a student from the database
+app.get('/deleteStudent/:id', (req, res) => {
+  const studentId = req.params.id;
+  const sql = 'DELETE FROM student WHERE studentId = ?';
+  connection.query(sql, [studentId], (error, results) => {
+    if (error) {
+      // Handle any error that occurs during the database operation
+      console.error('Error deleting student:', error);
+      res.send('Error deleting student');
+    } else {
+      // After a successful delete, go back to the student list
+      res.redirect('/');
+    }
   });
 });
 

@@ -36,6 +36,8 @@
               Student Image</th>
             <th width="50">Dob</th>
             <th width="50">Contact</th>
+            <th width="50">Edit</th>
+            <th width="50">Delete</th>
           </tr>
       </thead>
       <tbody>
@@ -43,9 +45,14 @@
           <tr>
             <!-- Make the student name a link to the /student/:id route so clicking it shows that single student's details -->
             <td><a href="/student/<%= students[i].studentId %>"><%= students[i].name %></a></td>
-            <td><img src="<%= students[i].image %>" width="100" height="100"></td>
+            <td><img src="<%= students[i].image && students[i].image.startsWith('http') ? students[i].image : '/images/' + students[i].image %>" width="100" height="100"></td>
             <td><%= new Date(students[i].dob).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' }) %></td>
             <td><%= students[i].contact %></td>
+            <!-- Edit Link -->
+            <td><a href="/editStudent/<%= students[i].studentId %>">Edit</a></td>
+            <!-- Delete Link -->
+            <td><a href="/deleteStudent/<%= students[i].studentId %>"
+                onclick="return confirm('Are you sure you want to delete this student?')">Delete</a></td>
           </tr>
         <% } %>
       </tbody>

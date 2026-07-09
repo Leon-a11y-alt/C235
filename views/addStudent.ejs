@@ -31,7 +31,7 @@
     <br>
 
     <!-- The name attributes (name, dob, contact, image) must match what the POST route reads from req.body -->
-    <form action="/addStudent" method="POST">
+    <form action="/addStudent" method="POST" enctype="multipart/form-data">
       <div class="mb-3 text-center">
         <label for="name" class="form-label">Student Name:</label>
         <input type="text" class="form-control mx-auto" style="max-width: 300px;" id="name" name="name" required>
@@ -44,12 +44,12 @@
 
       <div class="mb-3 text-center">
         <label for="contact" class="form-label">Contact:</label>
-        <input type="text" class="form-control mx-auto" style="max-width: 300px;" id="contact" name="contact" required>
+        <input type="text" class="form-control mx-auto" style="max-width: 300px;" id="contact" name="contact" maxlength="20" required>
       </div>
 
       <div class="mb-3 text-center">
         <label for="image" class="form-label">Image:</label>
-        <input type="text" class="form-control mx-auto" style="max-width: 300px;" id="image" name="image" required>
+        <input type="file" class="form-control mx-auto" style="max-width: 300px;" id="image" name="image" accept="image/*" required>
       </div>
 
       <div class="text-center">
